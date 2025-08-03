@@ -1,0 +1,50 @@
+# Step 1: Relax and Melt Si
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+read_data       quartz_supercell.data
+
+mass 1 15.999    # O
+mass 2 28.0855   # Si
+
+# Potential
+pair_style      tersoff
+pair_coeff      * * SiO.tersoff O Si
+
+neighbor 2.0 bin
+neigh_modify delay 10 check yes
+
+timestep        0.001
+
+thermo          1000
+thermo_style    custom step temp density etotal press
+
+velocity        all create 4000.0 12345 mom yes rot no dist gaussian
+
+# Hold at 5000K (melt)
+fix             melt all npt temp 5000.0 5000.0 2.0 iso 0.0 0.0 20.0
+run             50000
+unfix           melt
+
+# quench
+fix             quench all npt temp 5000.0 2000.0 2.0 iso 0.0 0.0 20.0
+run             300000
+unfix           quench
+
+fix             quench all npt temp 2000.0 2000.0 2.0 iso 0.0 0.0 20.0
+run             300000
+unfix           quench
+
+fix             quench all npt temp 2000.0 300.0 2.0 iso 0.0 0.0 20.0
+run             170000
+unfix           quench
+
+# aneal
+fix             aneal all npt temp 300.0 300.0 0.1 iso 0.0 0.0 1.0
+run             500000
+unfix           aneal
+
+write_data      aSi.data

@@ -1,0 +1,33 @@
+# Step 1: Relax and Melt Si
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+read_data       aSi.data
+
+mass 1 15.999    # O
+mass 2 28.0855   # Si
+
+# Potential
+pair_style      tersoff
+pair_coeff      * * SiO.tersoff O Si
+
+neighbor 2.0 bin
+neigh_modify delay 10 check yes
+
+timestep        0.001
+
+thermo          1000
+thermo_style    custom step temp density etotal press
+dump mydump all custom 100 dump.lammpstrj id type mass x y z
+dump_modify mydump sort id
+
+velocity        all create 300.0 12345 mom yes rot no dist gaussian
+
+fix             aneal all nvt temp 300.0 300.0 0.1
+run             50000
+unfix           aneal
+
+write_data      aSi.data
